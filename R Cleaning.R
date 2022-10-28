@@ -1,0 +1,68 @@
+##Install and Add Packages 
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+
+## Change directory
+getwd()
+setwd("C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Analyst class/Case Study Track 1/Bellabeat/Upload to SQL")
+
+## Import CSV
+HR_secs = read.csv("heartrate_seconds_merged.csv")
+head(HR_secs)
+
+MET = read.csv("minuteMETsNarrow_merged.csv")
+head(MET)
+
+daily_sleep = read.csv("sleepday_merged.csv")
+head(daily_sleep)
+
+weightlog = read.csv("weightLogInfo_merged.csv")
+head(weightlog)
+
+## attempt to split date and time for heartrate
+HR_secs[c("Date", "Time")] = str_split_fixed(HR_secs$Time, " ", 2)
+head(HR_secs)
+
+HR_secs = HR_secs[(c("Id", "Date", "Time", "Value"))]
+head(HR_secs)
+
+write.csv(HR_secs, "C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Analyst class/Case Study Track 1/Bellabeat/Upload to SQL/heartrate_seconds_updated.csv", row.names = FALSE)
+
+## MET
+MET[c("Date", "Time")] = str_split_fixed(MET$ActivityMinute, " ", 2)
+head(MET)
+
+MET = MET[(c("Id", "Date", "Time", "METs"))]
+head(MET)
+
+write.csv(MET, "C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Analyst class/Case Study Track 1/Bellabeat/Upload to SQL/MinuteMETsNarrow_updated.csv", row.names = FALSE)
+
+## Daily_sleep
+daily_sleep[c("Date", "Time")] = str_split_fixed(daily_sleep$SleepDay, " ", 2)
+head(daily_sleep)
+
+daily_sleep = daily_sleep[(c("Id", "Date", "Time", "TotalSleepRecords", "TotalMinutesAsleep", "TotalTimeInBed"))]
+head(daily_sleep)
+
+write.csv(daily_sleep, "C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Analyst class/Case Study Track 1/Bellabeat/Upload to SQL/sleepDay_updated.csv", row.names = FALSE)
+
+## weightlog
+weightlog[c("Date", "Time")] = str_split_fixed(weightlog$Date, " ", 2)
+head(weightlog)
+
+weightlog = weightlog[(c("Id", "Date", "Time", "WeightKg", "Fat", "BMI", "IsManualReport", "LogId"))]
+head(weightlog)
+
+write.csv(weightlog, "C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Analyst class/Case Study Track 1/Bellabeat/Upload to SQL/weightLogInfo_updated.csv", row.names = FALSE)
+
+## Plot
+dailyact = read.csv("dailyActivity_merged.csv")
+colnames(dailyact)
+View(dailyact)
+
+ggplot(data = dailyact) +
+  geom_point(mapping = aes(x = LightlyActiveMinutes, y = SedentaryMinutes)) +
+  geom_smooth(mapping = aes(x = LightlyActiveMinutes, y = SedentaryMinutes)) +
+  labs(title = "Sedentary vs Active Lifestyles")
