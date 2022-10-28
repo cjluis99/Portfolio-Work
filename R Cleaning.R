@@ -56,13 +56,3 @@ weightlog = weightlog[(c("Id", "Date", "Time", "WeightKg", "Fat", "BMI", "IsManu
 head(weightlog)
 
 write.csv(weightlog, "C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Analyst class/Case Study Track 1/Bellabeat/Upload to SQL/weightLogInfo_updated.csv", row.names = FALSE)
-
-## Plot
-dailyact = read.csv("dailyActivity_merged.csv")
-colnames(dailyact)
-View(dailyact)
-
-ggplot(data = dailyact) +
-  geom_point(mapping = aes(x = LightlyActiveMinutes, y = SedentaryMinutes)) +
-  geom_smooth(mapping = aes(x = LightlyActiveMinutes, y = SedentaryMinutes)) +
-  labs(title = "Sedentary vs Active Lifestyles")
