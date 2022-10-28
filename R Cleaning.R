@@ -1,14 +1,14 @@
-##Install and Add Packages 
+## Install and Add Packages ##
 library(dplyr)
 library(ggplot2)
 library(stringr)
 
 
-## Change directory
+## Change directory ##
 getwd()
 setwd("C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Analyst class/Case Study Track 1/Bellabeat/Upload to SQL")
 
-## Import CSV
+## Import and verify CSVs ##
 HR_secs = read.csv("heartrate_seconds_merged.csv")
 head(HR_secs)
 
@@ -21,7 +21,7 @@ head(daily_sleep)
 weightlog = read.csv("weightLogInfo_merged.csv")
 head(weightlog)
 
-## attempt to split date and time for heartrate
+## Spliting date and time for heartrate ##
 HR_secs[c("Date", "Time")] = str_split_fixed(HR_secs$Time, " ", 2)
 head(HR_secs)
 
@@ -30,7 +30,7 @@ head(HR_secs)
 
 write.csv(HR_secs, "C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Analyst class/Case Study Track 1/Bellabeat/Upload to SQL/heartrate_seconds_updated.csv", row.names = FALSE)
 
-## MET
+## Spliting date and time MET ##
 MET[c("Date", "Time")] = str_split_fixed(MET$ActivityMinute, " ", 2)
 head(MET)
 
@@ -39,7 +39,7 @@ head(MET)
 
 write.csv(MET, "C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Analyst class/Case Study Track 1/Bellabeat/Upload to SQL/MinuteMETsNarrow_updated.csv", row.names = FALSE)
 
-## Daily_sleep
+## Spliting date and time Daily_sleep ##
 daily_sleep[c("Date", "Time")] = str_split_fixed(daily_sleep$SleepDay, " ", 2)
 head(daily_sleep)
 
@@ -48,7 +48,7 @@ head(daily_sleep)
 
 write.csv(daily_sleep, "C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Analyst class/Case Study Track 1/Bellabeat/Upload to SQL/sleepDay_updated.csv", row.names = FALSE)
 
-## weightlog
+## Spliting date and time Weightlog ##
 weightlog[c("Date", "Time")] = str_split_fixed(weightlog$Date, " ", 2)
 head(weightlog)
 
