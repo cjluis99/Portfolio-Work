@@ -1,0 +1,328 @@
+-- Verifying the first and last day of survey participation 
+SELECT 
+  MIN(ActivityDate) AS firstday,
+  MAX(ActivityDate) AS lastday
+FROM 
+  `bellabeat-365022.fitbit_data.daily_activity` 
+ 
+-- Average steps across the whole time period
+WITH full_steps AS (
+  SELECT
+    DISTINCT Id AS Id,
+    COUNT(TotalSteps) AS DaysSteped,
+    SUM(TotalSteps) AS TotalSteps,
+    ROUND(AVG(TotalSteps), 2) As TotalAvgSteps,
+  FROM 
+    `bellabeat-365022.fitbit_data.daily_activity`
+  GROUP BY 
+    Id
+  ORDER BY
+    Id
+)
+,
+-- Gets average steps for Week 1
+week1_avg AS (
+  SELECT
+    DISTINCT Id AS Id,
+    ROUND(AVG(TotalSteps), 2) As AvgWeek1,
+  FROM 
+    `bellabeat-365022.fitbit_data.daily_activity`
+  WHERE
+    ActivityDate BETWEEN '2016-04-12' AND '2016-04-19'
+  GROUP BY
+    Id
+  ORDER BY
+    Id
+)
+,
+-- Average steps for week 2
+week2_avg AS (
+  SELECT
+    DISTINCT Id AS Id,
+    ROUND(AVG(TotalSteps), 2) As AvgWeek2,
+  FROM 
+    `bellabeat-365022.fitbit_data.daily_activity`
+  WHERE
+    ActivityDate BETWEEN '2016-04-20' AND '2016-04-27'
+  GROUP BY
+    Id
+  ORDER BY
+    Id
+)
+,
+-- Average steps for Week 3
+week3_avg AS (
+  SELECT
+    DISTINCT Id AS Id,
+    ROUND(AVG(TotalSteps), 2) As AvgWeek3,
+  FROM 
+    `bellabeat-365022.fitbit_data.daily_activity`
+  WHERE
+    ActivityDate BETWEEN '2016-04-28' AND '2016-05-05'
+  GROUP BY
+    Id
+  ORDER BY
+    Id
+)
+,
+-- Average Steps for week 4
+week4_avg AS (
+  SELECT
+    DISTINCT Id AS Id,
+    ROUND(AVG(TotalSteps), 2) As AvgWeek4,
+  FROM 
+    `bellabeat-365022.fitbit_data.daily_activity`
+  WHERE
+    ActivityDate BETWEEN '2016-05-06' AND '2016-05-12'
+  GROUP BY
+    Id
+  ORDER BY
+    Id
+)
+/*
+Joining the above CTEs while adding a case statement 
+to specify which participants are consistent trackers
+and which are inconsistent trackers
+*/
+ 
+SELECT
+  full_steps.Id,
+  full_steps.DaysSteped,
+  CASE
+    WHEN full_steps.DaysSteped = 31 THEN 'Tracked 31 Days'
+    WHEN full_steps.DaysSteped <31 THEN 'Tracked <31 Days'
+    ELSE NULL 
+  END AS Days31,
+  full_steps.TotalSteps,
+  full_steps.TotalAvgSteps,
+  week1_avg.AvgWeek1,
+  week2_avg.AvgWeek2,
+  week3_avg.AvgWeek3,
+  week4_avg.AvgWeek4
+FROM
+  full_steps
+LEFT JOIN
+  week1_avg
+ON
+  full_steps.Id = week1_avg.Id
+LEFT JOIN
+  week2_avg
+ON
+  week2_avg.Id = week1_avg.Id
+LEFT JOIN
+  week3_avg
+ON
+  week3_avg.Id = week1_avg.Id
+LEFT JOIN
+  week4_avg
+ON
+  week4_avg.Id = week1_avg.Id
+ORDER BY
+  Id
+-- This query was saved as a table named “avg_steps”
+ 
+-- Establishing a CTE with consistent trackers' steps data
+WITH Days31 AS (
+  SELECT 
+    *
+  FROM 
+    `bellabeat-365022.fitbit_data.avg_steps` 
+  WHERE
+    DaysSteped = 31
+)
+-- Checking the total average steps per week for participants with 31 tracked days
+SELECT
+  Round((SUM(AvgWeek1)/21), 2) AS totw1avg,
+  Round((SUM(AvgWeek2)/21), 2) AS totw2avg,
+  Round((SUM(AvgWeek3)/21), 2) AS totw3avg,
+  Round((SUM(AvgWeek4)/21), 2) AS totw4avg
+FROM
+  Days31
+ 
+-- Establishing a CTE with inconsistent trackers' steps data
+WITH Less31 AS (
+SELECT 
+  *
+FROM `bellabeat-365022.fitbit_data.avg_steps` 
+WHERE
+  DaysSteped <31
+)
+-- Checking the total average steps per week for participants with <31 tracked days
+SELECT
+  Round((SUM(AvgWeek1)/12), 2) AS total_week1_avg,
+  Round((SUM(AvgWeek2)/12), 2) AS total_week2_avg,
+  Round((SUM(AvgWeek3)/12), 2) AS total_week3_avg,
+  Round((SUM(AvgWeek4)/12), 2) AS total_week4_avg
+FROM
+  less31
+ 
+-- Creating a CTE that shows a participant's average activity minutes over the whole month
+WITH avg_activemin AS (
+  SELECT 
+    Id,
+    ROUND(AVG((VeryActiveMinutes)), 2) AS VeryActMin_Avg,
+    ROUND(AVG((FairlyActiveMinutes)), 2) AS FairlyActMin_Avg,
+    ROUND(AVG((LightlyActiveMinutes)), 2) AS LightlyActMin_Avg,
+    ROUND(AVG((SedentaryMinutes)), 2) AS SedMin_Avg
+  FROM 
+    `bellabeat-365022.fitbit_data.daily_activity`
+  GROUP BY  
+    Id
+  ORDER BY 
+    Id
+)
+-- Joining the above CTE with the avg_steps table
+SELECT 
+  avg_steps.*,
+  avg_activemin.VeryActMin_avg,
+  avg_activemin.FairlyActMin_avg,
+  avg_activemin.LightlyActMin_avg,
+  avg_activemin.SedMin_avg
+FROM 
+  `bellabeat-365022.fitbit_data.avg_steps` AS avg_steps 
+LEFT JOIN
+  avg_activemin
+ON
+  avg_steps.Id = avg_activemin.Id
+ORDER BY
+  Id
+-- Query save as table named "avg_steps_and_active_minutes"
+ 
+-- Looking at the total average activity minutes of consistent trackers
+SELECT 
+  ROUND(AVG(VeryActMin_avg), 2) AS TotVeryActMin_Avg,
+  ROUND(AVG(FairlyActMin_avg), 2) AS TotFairlyActMin_Avg,
+  ROUND(AVG(LightlyActMin_avg), 2) AS TotLightlyActMin_Avg,
+  ROUND(AVG(SedMin_avg), 2) AS TotSedMin_Avg
+FROM 
+  `bellabeat-365022.fitbit_data.avg_steps_and_actmin` 
+WHERE
+  DaysSteped = 31
+ 
+-- Looking at the total average activity minutes of inconsistent trackers
+SELECT 
+  ROUND(AVG(VeryActMin_avg), 2) AS TotVeryActMin_Avg,
+  ROUND(AVG(FairlyActMin_avg), 2) AS TotFairlyActMin_Avg,
+  ROUND(AVG(LightlyActMin_avg), 2) AS TotLightlyActMin_Avg,
+  ROUND(AVG(SedMin_avg), 2) AS TotSedMin_Avg
+FROM 
+  `bellabeat-365022.fitbit_data.avg_steps_and_actmin` 
+WHERE
+  DaysSteped < 31
+ 
+/*
+Creates CTE that takes the average minutes asleep and in
+bed for each participant and then converts those minutes 
+into hours
+*/
+WITH avg_sleep AS (
+SELECT 
+  Id,
+  ROUND(AVG(TotalMinutesAsleep/60), 2) AS Avg_TotHoursAsleep,
+  ROUND(AVG(TotalTimeInBed/60), 2) AS Avg_TotHoursInBed
+FROM 
+  `bellabeat-365022.fitbit_data.daily_sleep`
+GROUP BY
+  Id
+)
+-- Above CTE joined with "avg_steps_and_actmin" table
+SELECT
+  avg_steps_and_actmin.Id,
+  avg_steps_and_actmin.DaysSteped,
+  avg_steps_and_actmin.Days31,
+  avg_sleep.Avg_TotHoursAsleep,
+  avg_sleep.Avg_TotHoursInBed
+FROM
+  `bellabeat-365022.fitbit_data.avg_steps_and_actmin` AS avg_steps_and_actmin
+LEFT JOIN
+  avg_sleep
+ON
+  avg_steps_and_actmin.Id = avg_sleep.Id
+ORDER BY 
+  Id
+-- Query saved as table named "avg_sleep"
+ 
+-- Looking at consistent trackers' total average hours in bed and hours asleep
+SELECT  
+  ROUND(AVG(Avg_TotMinAsleep/60), 2) AS Avg_TotHoursAsleep,
+  ROUND(AVG(Avg_TotTimeInBed/60), 2) AS Avg_TotHoursInBed
+FROM 
+  `bellabeat-365022.fitbit_data.avg_sleep` 
+WHERE
+  DaysSteped = 31
+ 
+-- Looking at inconsistent trackers' total average hours in bed and hours asleep
+SELECT  
+  ROUND(AVG(Avg_TotMinAsleep/60), 2) AS Avg_TotHoursAsleep,
+  ROUND(AVG(Avg_TotTimeInBed/60), 2) AS Avg_TotHoursInBed
+FROM 
+  `bellabeat-365022.fitbit_data.avg_sleep` 
+WHERE
+  DaysSteped < 31
+ 
+/*
+Creating a CTE that adds a column to the "daily_sleep" table
+which shows the day of the week as a number between 1-7
+(with Sunday being 1 and Saturday 7)
+*/
+WITH days AS (
+  SELECT 
+    *,
+    EXTRACT(DAYOFWEEK FROM Date) AS WeekDay_Num
+  FROM 
+    `bellabeat-365022.fitbit_data.daily_sleep` 
+)
+,
+-- Creating a CTE that changes the numbers in the "WeekDay_Num" column into their respective day name 
+up_table AS (
+  SELECT
+    Id,
+    Date,
+    CASE 
+      WHEN WeekDay_Num =  1 THEN 'Sunday'
+      WHEN WeekDay_Num =  2 THEN 'Monday'
+      WHEN WeekDay_Num =  3 THEN 'Tuesday'
+      WHEN WeekDay_Num =  4 THEN 'Wednesday'
+      WHEN WeekDay_Num =  5 THEN 'Thursday'
+      WHEN WeekDay_Num =  6 THEN 'Friday'
+      WHEN WeekDay_Num =  7 THEN 'Saturday'
+      END AS DayName,
+    ROUND(TotalMinutesAsleep/60, 2) AS TotalHoursAsleep,
+    ROUND(TotalTimeInBed/60, 2) AS TotalHoursInBed
+  FROM
+    days
+)
+-- Joining the "up_table" CTE with the "avg_sleep" table 
+SELECT
+  up_table.*,
+  avg_sleep.Days31,
+FROM
+  up_table
+LEFT JOIN
+  `bellabeat-365022.fitbit_data.avg_sleep` AS avg_sleep
+ON
+  up_table.Id = avg_sleep.Id
+ORDER BY
+  Id
+ 
+/*
+Creating a CTE that joins the 'daily_activity' and 'daily_sleep' tables 
+to show total minutes asleep per day and active minutes per day
+*/
+SELECT
+  daily_activity.Id,
+  daily_activity.ActivityDate,
+  daily_sleep.TotalMinutesAsleep,
+  daily_activity.VeryActiveMinutes,
+  daily_activity.FairlyActiveMinutes,
+  daily_activity.LightlyActiveMinutes,
+  daily_activity.SedentaryMinutes
+FROM
+  `bellabeat-365022.fitbit_data.daily_activity` AS daily_activity
+LEFT JOIN
+  `bellabeat-365022.fitbit_data.daily_sleep` AS daily_sleep
+ON
+  daily_activity.Id = daily_sleep.Id
+  AND daily_activity.ActivityDate = daily_sleep.Date
+ORDER BY
+  daily_activity.ActivityDate
