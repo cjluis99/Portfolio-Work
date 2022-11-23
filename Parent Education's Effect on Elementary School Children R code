@@ -1,0 +1,145 @@
+install.packages("ggplot2")
+install.packages("viridis")
+install.packages("dplyr")
+
+library(ggplot2) 
+library(viridis) 
+library(dplyr)
+
+#Edu Data Set###
+getwd()
+setwd("C:/Users/Christian .DESKTOP-J2KEEKA/OneDrive/Documents/PSC 103B/Final Paper/Data")
+edu = read.csv('edu_data.csv',header = T)
+
+head(edu)
+tail(edu)
+View(edu)
+
+###Enrollment Data###
+range(edu$enroll)
+mean(edu$enroll)
+sd(edu$enroll)
+
+###For Table1 ###
+trans_col = as.factor(edu$some_col)
+class(trans_col)
+edu$trans_col = trans_col
+
+edu_subset = subset(edu, select = c("trans_col", "api00"))
+
+table(edu$trans_col)
+
+tapply(edu_subset$api00, edu_subset$trans.col, mean, na.rm = TRUE)
+tapply(edu_subset$api00, edu_subset$trans_col, sd, na.rm = TRUE)
+
+#ANOVA Assumptions
+###QQ-Plot###
+par(mfrow = c(1, 3))
+
+qqnorm(edu$api00[edu$trans_col == '0-10%'])
+qqline(edu$api00[edu$trans_col == '0-10%'])
+
+qqnorm(edu$api00[edu$trans_col == '11-20%'])
+qqline(edu$api00[edu$trans_col == '11-20%'])
+
+qqnorm(edu$api00[edu$trans_col == '>20%'])
+qqline(edu$api00[edu$trans_col == '>20%'])
+
+###Equality of Variance###
+sds= tapply(edu_subset$api00, edu_subset$trans_col, sd, na.rm = TRUE)
+max(sds)
+min(sds)
+max(sds)/min(sds)
+
+#ANOVA
+edu_aov = aov(api00 ~ trans_col, data = edu)
+summary(edu_aov)
+
+#By-Hand Calculation
+###Between-Group Variance###
+tapply(edu_subset$api00, edu_subset$trans_col, mean, na.rm = TRUE)
+
+edu_means = data.frame(GroupMean = tapply(edu_subset$api00, edu_subset$trans_col, mean, na.rm = TRUE), GrandMean = mean(edu$api00, na.rm = TRUE))
+edu_means
+
+edu_means$mean_deviations = edu_means$GroupMean - edu_means$GrandMean
+edu_means
+
+table(edu_subset$trans_col)
+
+SSB = sum((edu_means$mean_deviations^2) * table(edu_subset$trans_col))
+SSB
+
+###Within-Group Variance###
+edu_subset = edu_subset %>% 
+  group_by(trans_col) %>% 
+  mutate("group_mean" = mean(api00, na.rm = TRUE))
+
+View(edu_subset)
+
+edu_subset$within_deviations = edu_subset$api00 - edu_subset$group_mean
+SSW = sum(edu_subset$within_deviations^2, na.rm = T)
+SSW
+
+###ANOVA Calculation###
+dfB = 3 - 1
+dfW = 315 - 3
+
+MSB = SSB/dfB
+MSW = SSW/dfW
+MSB
+MSW
+
+Fstat = MSB/MSW
+Fstat
+
+pf(q = Fstat, df1 = dfB, df2 = dfW, lower.tail = FALSE)
+
+#(F(2, 312) =22.33, p < .001)
+
+#Post-Hoc Test
+TukeyHSD(edu_aov)
+
+###By-Hand###
+x1 = tapply(edu_subset$api00, edu_subset$trans_col, mean, na.rm = T)[1]
+x2 = tapply(edu_subset$api00, edu_subset$trans_col, mean, na.rm = T)[2]
+x3 = tapply(edu_subset$api00, edu_subset$trans_col, mean, na.rm = T)[3]
+n1 = table(edu_subset$trans_col)[1]
+n2 = table(edu_subset$trans_col)[2]
+n3 = table(edu_subset$trans_col)[3]
+x1;x2;x3;n1;n2;n3
+
+MSW
+
+q = qtukey(p = .95, df = 312, nmeans = 3)
+q
+
+#0-10% - 11-20%
+mu12_lower <- x1-x2 - q*sqrt(MSW/2*(1/n1 + 1/n2))
+mu12_upper <- x1-x2  + q*sqrt(MSW/2*(1/n1 + 1/n2))
+c(mu12_lower, mu12_upper)
+
+#0-10% - >20%
+mu13_lower<-x1-x3 - q*sqrt(MSW/2*(1/n1 + 1/n3))
+mu13_upper<-x1-x3  + q*sqrt(MSW/2*(1/n1 + 1/n3))
+c(mu13_lower, mu13_upper)
+
+#11-20% - >20%
+mu23_lower<-x2-x3 - q*sqrt(MSW/2*(1/n2 + 1/n3))
+mu23_upper<-x2-x3  + q*sqrt(MSW/2*(1/n2 + 1/n3))
+c(mu23_lower,mu23_upper)
+
+TK.CI<-cbind.data.frame(c("0-10% - 11-20%","0-10% - >20%","11-20% - >20%"),rbind(
+  c(mu12_lower, mu12_upper),
+  c(mu13_lower, mu13_upper),
+  c(mu23_lower,mu23_upper)
+))
+colnames(TK.CI)<-c("Pairs","CI.Lower","CI.Upper")
+TK.CI
+ 
+#mu1 - mu2: 0-10% - 11-20% includes 0 (not significantly different)
+#mu1 - mu3: 0-10% - >20% does not include 0
+#mu2 - mu3: 11-20% - >20% does not include 0
+
+tapply(edu_subset$api00, edu_subset$trans_col, mean, na.rm = T)
+tapply(edu_subset$api00, edu_subset$trans_col, sd, na.rm = T)
