@@ -1,0 +1,52 @@
+ShopperData = read.csv("C:/Users/Christian .DESKTOP-J2KEEKA/Desktop/Writing Samples/post to site/PSC103/Codes/Alternative dataset_FINAL PROJECT.csv", header = T)
+library(lmtest)
+
+######Subsets######
+Male = subset(ShopperData, Gender == "Male")
+Female = subset(ShopperData, Gender == "Female")
+
+View(ShopperData)
+length(Male$Gender)
+length(Female$Gender)
+######Two Sample T Tests######
+t.test(Male$Total, Female$Total, var.equal = T)
+
+######Normality######
+shapiro.test(Male$Total)
+shapiro.test(Female$Total)
+
+shapiro.test(Male$sqrttotal)
+shapiro.test(Female$sqrttotal)
+
+qqnorm(ShopperData$sqrttotal, main = 'Total Spending of Customers')
+qqline(ShopperData$sqrttotal)
+
+hist(ShopperData$Total, breaks = 25)
+
+ShopperData$sqrttotal = sqrt(ShopperData$Total)
+head(ShopperData)
+
+par(mfrow = c(1, 4))
+
+######Transformations######
+######SQRT######
+hist(ShopperData$Total, main = 'Original Data')
+hist(ShopperData$sqrttotal, main = 'Square Root Transformed Data')
+
+######Reciprocal######
+ShopperData$reciptotal = 1/ShopperData$Total
+hist(ShopperData$reciptotal, main = 'Reciprocal Transformed Data')
+
+######Log######
+ShopperData$logtotal = log(ShopperData$Total)
+hist(ShopperData$logtotal, main = 'Logarithm Transformed Data')
+###########################
+######Homogeneity#######
+bptest(ShopperData$Total ~ ShopperData$Gender)
+
+######Standard Error######
+standarderror = sd(ShopperData$Total) / sqrt(length(ShopperData$Total))
+
+######Standard Deviation######
+sd(Male$Total)
+sd(Female$Total)
