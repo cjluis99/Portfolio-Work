@@ -1,0 +1,37 @@
+par(mfrow = c(1, 4))
+
+qqnorm(Female$sqrttotal)
+qqnorm(Female$reciptotal)
+qqnorm(Female$logtotal)
+
+qqnorm(Female$Total)
+
+qqnorm(ShopperData$sqrttotal)
+qqline(ShopperData$sqrttotal)
+
+
+######SQRT######
+ShopperData$sqrttotal = sqrt(ShopperData$Total)
+Male$sqrttotal = sqrt(Male$Total)
+hist(Male$Total, main = 'Original Data')
+hist(Male$sqrttotal, main = 'Square Root Transformed Data')
+
+Female$sqrttotal = sqrt(Female$Total)
+hist(Female$Total, main = 'Original Data')
+hist(Female$sqrttotal, main = 'Square Root Transformed Data')
+
+######Reciprocal######
+ShopperData$reciptotal = 1/ShopperData$Total
+Male$reciptotal = 1/Male$Total
+hist(Male$reciptotal, main = 'Reciprocal Transformation')
+
+Female$reciptotal = 1/Female$Total
+hist(Female$reciptotal)
+
+######Log#####
+ShopperData$logtotal = log(ShopperData$Total)
+Male$logtotal = log(Male$Total)
+hist(Male$logtotal, main = 'Logarithm Transformation')
+
+Female$logtotal = log(Female$Total)
+hist(Female$logtotal, main = 'Logarithm Transformation')
